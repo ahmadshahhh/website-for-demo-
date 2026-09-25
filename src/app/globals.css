@@ -1,0 +1,159 @@
+@import "tailwindcss";
+
+/* ───────────────────────────────────────────────────────────────────────────
+   SAFFRON YARD DESIGN SYSTEM
+   Warm cream surfaces, saffron gold for action, pomegranate red for brand
+   moments, and a deep roasted-coffee ink for text.
+   ─────────────────────────────────────────────────────────────────────────── */
+@theme {
+  --color-cream: #fbf6ee;
+  --color-sand: #f4ebdd;
+  --color-sand-dark: #eadcc6;
+  --color-line: #e9dcc8;
+  --color-line-strong: #d9c7ab;
+  --color-ink: #2a1d15;
+  --color-ink-soft: #4a3a2e;
+  --color-muted: #75655a;
+
+  --color-saffron-50: #fff7e6;
+  --color-saffron-100: #fdebc4;
+  --color-saffron-200: #fadb93;
+  --color-saffron-300: #f6c45a;
+  --color-saffron-400: #f2b233;
+  --color-saffron-500: #e89b12;
+  --color-saffron-600: #c77d08;
+  --color-saffron-700: #9a5e07;
+
+  --color-pomegranate-50: #fbeeec;
+  --color-pomegranate-100: #f5d4d0;
+  --color-pomegranate-500: #b3343a;
+  --color-pomegranate-600: #9e2a2b;
+  --color-pomegranate-700: #7d1f22;
+  --color-pomegranate-900: #4a1214;
+
+  --color-leaf: #2f7d4f;
+  --color-leaf-50: #e8f4ec;
+
+  --font-sans: "Plus Jakarta Sans Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-display: "Fraunces Variable", ui-serif, Georgia, serif;
+  --font-arabic: "Cairo Variable", "Segoe UI", Tahoma, sans-serif;
+
+  --shadow-card: 0 1px 2px rgb(74 45 20 / 0.06), 0 8px 24px -12px rgb(74 45 20 / 0.18);
+  --shadow-lift: 0 2px 4px rgb(74 45 20 / 0.06), 0 22px 40px -18px rgb(74 45 20 / 0.35);
+
+  --animate-fade-up: fade-up 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+  --animate-pop: pop 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
+  --animate-slide-in: slide-in 0.3s cubic-bezier(0.22, 1, 0.36, 1) both;
+  --animate-pulse-ring: pulse-ring 1.6s ease-out infinite;
+}
+
+@keyframes fade-up {
+  from { opacity: 0; transform: translate3d(0, 14px, 0); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes pop {
+  0% { transform: scale(0.6); opacity: 0; }
+  70% { transform: scale(1.12); opacity: 1; }
+  100% { transform: scale(1); }
+}
+@keyframes slide-in {
+  from { opacity: 0; transform: translate3d(0, -8px, 0); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes pulse-ring {
+  0% { box-shadow: 0 0 0 0 rgb(232 155 18 / 0.55); }
+  100% { box-shadow: 0 0 0 14px rgb(232 155 18 / 0); }
+}
+
+/* Arabic uses Cairo for everything — Latin display serifs don't pair with Arabic script. */
+html[lang="ar"] {
+  --font-sans: var(--font-arabic);
+  --font-display: var(--font-arabic);
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--color-cream);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+html[lang="ar"] body {
+  line-height: 1.7;
+}
+
+/* Keep Latin numerals, phone numbers and tracking IDs LTR inside Arabic text. */
+.ltr-nums {
+  direction: ltr;
+  unicode-bidi: isolate;
+}
+
+::selection {
+  background: var(--color-saffron-200);
+}
+
+:focus-visible {
+  outline: 2.5px solid var(--color-saffron-500);
+  outline-offset: 2px;
+}
+
+@layer components {
+  .container-page {
+    @apply mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8;
+  }
+  .card {
+    @apply rounded-2xl border border-line bg-white shadow-[var(--shadow-card)];
+  }
+  .eyebrow {
+    @apply text-xs font-bold uppercase tracking-[0.18em] text-saffron-700;
+  }
+  html[lang="ar"] .eyebrow {
+    @apply tracking-normal text-sm;
+  }
+  .heading-xl {
+    @apply font-display text-4xl leading-[1.05] font-semibold tracking-tight sm:text-5xl lg:text-6xl;
+  }
+  .heading-lg {
+    @apply font-display text-3xl leading-tight font-semibold tracking-tight sm:text-4xl;
+  }
+  .heading-md {
+    @apply font-display text-2xl leading-tight font-semibold tracking-tight;
+  }
+  html[lang="ar"] .heading-xl,
+  html[lang="ar"] .heading-lg,
+  html[lang="ar"] .heading-md {
+    @apply leading-snug font-bold tracking-normal;
+  }
+  .no-scrollbar {
+    scrollbar-width: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  body {
+    background: white;
+  }
+}
