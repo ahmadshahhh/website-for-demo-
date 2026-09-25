@@ -47,6 +47,8 @@ the menu, categories, delivery areas, settings and the first admin account.
 | `npm run lint` | ESLint |
 | `npm run check` | Typecheck + lint + build |
 | `npm run db:generate` | Create a new SQL migration after editing `src/db/schema.ts` |
+| `npm run db:migrate` | Apply migrations to `DATABASE_URL` (local file or Turso) |
+| `npm run db:studio` | Browse the database in Drizzle Studio |
 
 Copy `.env.example` to `.env.local` to override anything (database URL, admin
 credentials, signing secret, payment provider, site URL).
@@ -250,7 +252,18 @@ ADMIN_PASSWORD=<a strong password>
 NEXT_PUBLIC_SITE_URL=https://your-domain
 ```
 
-Migrations and seed data are applied automatically on the first request.
+Migrations and seed data are applied automatically on the first request. To
+create the tables in Turso yourself beforehand, run Drizzle against it:
+
+```bash
+DATABASE_URL=libsql://saffron-yard-<org>.turso.io \
+DATABASE_AUTH_TOKEN=<token> \
+npm run db:migrate
+```
+
+(`npm run db:studio` with the same variables opens Drizzle Studio to browse the
+data.) The menu, settings and first admin account are seeded on the app's first
+request.
 
 ## Project structure
 
