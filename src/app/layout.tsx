@@ -8,11 +8,12 @@ import { I18nProvider } from "@/components/providers/I18nProvider";
 import { ToastProvider } from "@/components/providers/ToastProvider";
 import { dirOf } from "@/lib/i18n/config";
 import { getI18n } from "@/lib/i18n/server";
+import { siteUrl } from "@/lib/site-url";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getI18n();
   return {
-    metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"),
+    metadataBase: new URL(siteUrl()),
     title: { default: t.meta.title, template: `%s · ${t.common.brand}` },
     description: t.meta.description,
     openGraph: { title: t.meta.title, description: t.meta.description },

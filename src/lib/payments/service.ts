@@ -4,9 +4,7 @@ import { getDb } from "@/db";
 import { orders, payments } from "@/db/schema";
 import { getProviderById } from "./registry";
 
-export function siteUrl() {
-  return (process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000").replace(/\/$/, "");
-}
+export { siteUrl } from "@/lib/site-url";
 
 /**
  * Apply a verified gateway result. Idempotent: only a pending payment can
