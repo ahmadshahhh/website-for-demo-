@@ -31,6 +31,7 @@ const ar: Dictionary = {
     unavailable: "غير متوفر",
     soldOut: "نفدت الكمية",
     somethingWrong: "حدث خطأ ما. يرجى المحاولة مرة أخرى.",
+    retry: "إعادة المحاولة",
     tooManyAttempts: "محاولات كثيرة. يرجى الانتظار بضع دقائق ثم المحاولة مجدداً.",
     viewAll: "عرض الكل",
     guest: "زائر",

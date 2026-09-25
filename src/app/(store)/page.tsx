@@ -2,6 +2,7 @@ import Link from "next/link";
 import { MenuCard } from "@/components/menu/MenuCard";
 import { LinkButton } from "@/components/ui/Button";
 import { FoodImage } from "@/components/ui/FoodImage";
+import { LogoMark } from "@/components/ui/Logo";
 import {
   ArrowIcon,
   BagIcon,
@@ -41,6 +42,18 @@ export default async function HomePage() {
         <div className="absolute inset-0 opacity-[0.07]" style={{ backgroundImage: "radial-gradient(#F2B233 1px, transparent 1px)", backgroundSize: "22px 22px" }} />
         <div className="container-page relative grid items-center gap-10 py-12 sm:py-16 lg:grid-cols-[1fr_1.05fr] lg:py-20">
           <div className="animate-fade-up">
+            <div className="mb-6 flex items-center gap-3">
+              {s.logoUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={s.logoUrl} alt="" className="size-14 rounded-xl object-contain" />
+              ) : (
+                <LogoMark size={56} className="drop-shadow-lg" />
+              )}
+              <span className="leading-tight">
+                <span className="block font-display text-2xl font-semibold text-cream">{name}</span>
+                <span className="text-xs font-semibold uppercase tracking-[0.2em] text-saffron-300 rtl:tracking-normal">{pick(s, "name", locale === "ar" ? "en" : "ar")}</span>
+              </span>
+            </div>
             <p className="inline-flex items-center gap-2 rounded-full border border-saffron-300/30 bg-white/5 px-3 py-1.5 text-sm font-semibold text-saffron-200">
               <span className={`size-2 rounded-full ${s.isOpen ? "bg-emerald-400" : "bg-pomegranate-500"}`} />
               {s.isOpen ? t.status.open : t.status.closed} · {fmt(t.home.deliveryIn, { min: s.deliveryTimeMin, max: s.deliveryTimeMax })}

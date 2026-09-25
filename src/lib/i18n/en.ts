@@ -35,6 +35,7 @@ const en = {
     unavailable: "Unavailable",
     soldOut: "Sold out",
     somethingWrong: "Something went wrong. Please try again.",
+    retry: "Try again",
     tooManyAttempts: "Too many attempts. Please wait a few minutes and try again.",
     viewAll: "View all",
     guest: "Guest",
