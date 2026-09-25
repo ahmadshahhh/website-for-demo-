@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/cn";
 import { LogoMark } from "./Logo";
 
@@ -20,6 +20,12 @@ export function FoodImage({
   priority?: boolean;
 }) {
   const [failed, setFailed] = useState(false);
+  const ref = useRef<HTMLImageElement>(null);
+  // An image can fail before hydration attaches onError — detect that case too.
+  useEffect(() => {
+    const img = ref.current;
+    if (img && img.complete && img.naturalWidth === 0) img.dispatchEvent(new Event("error"));
+  }, [src]);
   if (!src || failed) {
     return (
       <div className={cn("flex items-center justify-center bg-gradient-to-br from-saffron-100 to-sand-dark", className)} role="img" aria-label={alt}>
@@ -30,6 +36,7 @@ export function FoodImage({
   return (
     // eslint-disable-next-line @next/next/no-img-element
     <img
+      ref={ref}
       src={src}
       alt={alt}
       loading={priority ? "eager" : "lazy"}
