@@ -15,7 +15,7 @@ const nextConfig: NextConfig = {
   experimental: {
     serverActions: {
       // Menu/hero image uploads go through Server Actions.
-      bodySizeLimit: "6mb",
+      bodySizeLimit: "4.5mb",
     },
   },
   async headers() {

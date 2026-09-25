@@ -47,6 +47,8 @@ the menu, categories, delivery areas, settings and the first admin account.
 | `npm run lint` | ESLint |
 | `npm run check` | Typecheck + lint + build |
 | `npm run db:generate` | Create a new SQL migration after editing `src/db/schema.ts` |
+| `npm run db:migrate` | Apply migrations to `DATABASE_URL` (local file or Turso) |
+| `npm run db:studio` | Browse the database in Drizzle Studio |
 
 Copy `.env.example` to `.env.local` to override anything (database URL, admin
 credentials, signing secret, payment provider, site URL).
@@ -239,18 +241,39 @@ Money is stored as integer **fils** (1 KWD = 1000 fils) — never floats.
 `npm ci && npm run build && npm start`. Keep the `data/` directory on a
 persistent volume, or set `DATABASE_URL` to Turso.
 
-**Vercel / serverless:** the filesystem is not persistent, so use Turso:
+**Vercel + Turso:**
+
+1. In Vercel → Project → Settings → Environment Variables add, for
+   **Production and Preview**:
+
+   | Name | Value |
+   | --- | --- |
+   | `DATABASE_URL` | `libsql://<db>-<org>.turso.io` (`turso db show <db> --url`) |
+   | `DATABASE_AUTH_TOKEN` | a **read-write** token (`turso db tokens create <db>`) |
+   | `AUTH_SECRET` | output of `openssl rand -base64 32` |
+   | `ADMIN_EMAIL` | the owner's email |
+   | `ADMIN_PASSWORD` | a strong password (used only when the first admin is created) |
+   | `NEXT_PUBLIC_SITE_URL` | `https://your-domain.com` (optional; defaults to the Vercel URL) |
+
+   `TURSO_DATABASE_URL` / `TURSO_AUTH_TOKEN` (the names Vercel's Turso
+   integration creates) also work.
+2. Redeploy (environment changes only apply to new deployments).
+3. Open **`/api/health`** on the deployed site. It reports which variables are
+   set (never their values), whether Turso is reachable, whether all 19 tables
+   exist and whether seed data is present — or the exact error if not.
+
+Tables and seed data are created automatically on the first request. The
+migration is idempotent, so it also works on a database whose tables were
+created earlier with `drizzle-kit push` or `npm run db:migrate`, and several
+instances starting at once can't collide. To create the tables yourself:
 
 ```bash
-DATABASE_URL=libsql://saffron-yard-<org>.turso.io
-DATABASE_AUTH_TOKEN=<token>
-AUTH_SECRET=<openssl rand -base64 32>
-ADMIN_EMAIL=you@example.com
-ADMIN_PASSWORD=<a strong password>
-NEXT_PUBLIC_SITE_URL=https://your-domain
+DATABASE_URL=libsql://<db>-<org>.turso.io DATABASE_AUTH_TOKEN=<token> npm run db:migrate
 ```
 
-Migrations and seed data are applied automatically on the first request.
+(`npm run db:studio` with the same variables opens Drizzle Studio.)
+
+Uploads are limited to 4 MB per image (Vercel's request limit is 4.5 MB).
 
 ## Project structure
 

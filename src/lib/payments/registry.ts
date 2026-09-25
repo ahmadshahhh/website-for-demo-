@@ -13,9 +13,12 @@ const providers: Record<string, PaymentProvider> = {
 };
 
 export function getOnlineProvider(): PaymentProvider {
-  const id = process.env.PAYMENT_PROVIDER || "simulator";
+  const id = process.env.PAYMENT_PROVIDER?.trim() || "simulator";
   const p = providers[id];
-  if (!p) throw new Error(`Unknown PAYMENT_PROVIDER "${id}"`);
+  if (!p) {
+    console.error(`Unknown PAYMENT_PROVIDER "${id}" — falling back to the test simulator.`);
+    return simulatorProvider;
+  }
   return p;
 }
 

@@ -504,7 +504,7 @@ const ar: Dictionary = {
       tags: "الوسوم",
       tagsHint: "مفصولة بفواصل: veg, spicy, signature",
       upload: "رفع صورة",
-      uploadHint: "JPG أو PNG أو WebP، حتى ٥ ميغابايت",
+      uploadHint: "JPG أو PNG أو WebP، حتى ٤ ميغابايت",
       imageUrl: "…أو رابط الصورة",
       removeImage: "إزالة الصورة",
       moveUp: "تحريك لأعلى",
@@ -517,7 +517,7 @@ const ar: Dictionary = {
       options: "الخيارات (التخصيص)",
       optionsHint: "مجموعات الخيارات لهذا الصنف مثل الحجم أو الإضافات.",
       badPrice: "أدخل سعراً صحيحاً، مثال: 2.750",
-      badImage: "يجب أن تكون الصورة JPG أو PNG أو WebP وأقل من ٥ ميغابايت.",
+      badImage: "يجب أن تكون الصورة JPG أو PNG أو WebP وأقل من ٤ ميغابايت.",
       slugTaken: "يوجد صنف آخر بنفس الاسم.",
     },
     categories: {

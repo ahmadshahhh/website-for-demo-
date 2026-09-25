@@ -509,7 +509,7 @@ const en = {
       tags: "Tags",
       tagsHint: "Comma separated: veg, spicy, signature",
       upload: "Upload image",
-      uploadHint: "JPG, PNG or WebP, up to 5 MB",
+      uploadHint: "JPG, PNG or WebP, up to 4 MB",
       imageUrl: "…or image URL",
       removeImage: "Remove image",
       moveUp: "Move up",
@@ -522,7 +522,7 @@ const en = {
       options: "Options (customisation)",
       optionsHint: "Option groups for this item, such as size or extras.",
       badPrice: "Enter a valid price, e.g. 2.750",
-      badImage: "Image must be JPG, PNG or WebP and under 5 MB.",
+      badImage: "Image must be JPG, PNG or WebP and under 4 MB.",
       slugTaken: "Another item already uses this name.",
     },
     categories: {

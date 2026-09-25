@@ -3,7 +3,8 @@ import { randomUUID } from "node:crypto";
 import { getDb } from "@/db";
 import { media } from "@/db/schema";
 
-export const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
+/** Vercel caps request bodies at 4.5 MB, so keep uploads comfortably below it. */
+export const MAX_IMAGE_BYTES = 4 * 1024 * 1024;
 
 /** Identify an image by its magic bytes — never trust the declared type. SVG is refused (script risk). */
 export function sniffImageType(buf: Buffer): "image/jpeg" | "image/png" | "image/webp" | null {

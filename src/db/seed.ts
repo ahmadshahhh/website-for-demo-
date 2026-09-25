@@ -1,4 +1,5 @@
-import { count } from "drizzle-orm";
+import { sql } from "drizzle-orm";
+import type { BatchItem } from "drizzle-orm/batch";
 import { hashPassword } from "@/lib/auth/password";
 import type { DB } from "./index";
 import * as s from "./schema";
@@ -15,14 +16,67 @@ import {
   aboutPhoto,
 } from "./seed-data";
 
+const SEED_MARKER = "seed_version";
+const SEED_VERSION = "1";
+
 /**
- * Idempotent first-run seed. Each block only runs when its table is empty,
- * so it never overwrites anything the restaurant has edited.
+ * First-run seed. Runs once per database:
+ * - A marker row in app_secrets records that seeding happened, so nothing the
+ *   restaurant later edits or deletes is ever re-created.
+ * - Every row has an explicit id and is inserted with ON CONFLICT DO NOTHING in
+ *   ONE atomic batch, so several server instances starting at the same moment
+ *   (normal on Vercel) can't collide or duplicate data — and it is a single
+ *   round-trip to Turso.
  */
 export async function seedDatabase(db: DB) {
-  const [{ n: settingsCount }] = await db.select({ n: count() }).from(s.restaurantSettings);
-  if (settingsCount === 0) {
-    await db.insert(s.restaurantSettings).values({
+  const [state] = await db
+    .select({
+      marker: sql<number>`(select count(*) from ${s.appSecrets} where ${s.appSecrets.key} = ${SEED_MARKER})`,
+      settings: sql<number>`(select count(*) from ${s.restaurantSettings})`,
+    })
+    .from(sql`(select 1)`);
+  if (Number(state.marker) > 0) return;
+
+  const marker = db.insert(s.appSecrets).values({ key: SEED_MARKER, value: SEED_VERSION }).onConflictDoNothing();
+
+  // A database seeded by an earlier version of the app: just record the marker.
+  if (Number(state.settings) > 0) {
+    await marker;
+    return;
+  }
+
+  const catId = new Map(seedCategories.map((c, i) => [c.slug, i + 1]));
+  const itemRows = seedItems.map((item, i) => ({
+    id: i + 1,
+    slug: item.slug,
+    categoryId: catId.get(item.category) ?? null,
+    nameEn: item.nameEn,
+    nameAr: item.nameAr,
+    descriptionEn: item.descriptionEn,
+    descriptionAr: item.descriptionAr,
+    price: item.price,
+    imageUrl: seedPhotos[item.slug] ? unsplash(seedPhotos[item.slug]) : null,
+    isAvailable: item.isAvailable ?? true,
+    tags: item.tags ?? "",
+    sortOrder: i,
+  }));
+  const itemId = new Map(itemRows.map((r) => [r.slug, r.id]));
+
+  const groupRows: (typeof s.optionGroups.$inferInsert)[] = [];
+  const optionRows: (typeof s.options.$inferInsert)[] = [];
+  for (const group of seedOptionGroups) {
+    for (const item of itemRows.filter((r) => r.categoryId === catId.get(group.categorySlug))) {
+      const groupId = groupRows.length + 1;
+      groupRows.push({ id: groupId, menuItemId: item.id, nameEn: group.nameEn, nameAr: group.nameAr, minSelect: group.minSelect, maxSelect: group.maxSelect });
+      group.options.forEach((o, i) => optionRows.push({ ...o, id: optionRows.length + 1, groupId, sortOrder: i }));
+    }
+  }
+
+  const adminEmail = (process.env.ADMIN_EMAIL || "admin@saffronyard.kw").toLowerCase().trim();
+  const adminPassword = process.env.ADMIN_PASSWORD || "ChangeMe-Saffron-2026";
+
+  const statements: [BatchItem<"sqlite">, ...BatchItem<"sqlite">[]] = [
+    db.insert(s.restaurantSettings).values({
       id: 1,
       nameEn: "Saffron Yard",
       nameAr: "ساحة الزعفران",
@@ -44,12 +98,8 @@ export async function seedDatabase(db: DB) {
       deliveryTimeMax: 50,
       pickupTime: 20,
       pickupDiscountPercent: 10,
-    });
-  }
-
-  const [{ n: homeCount }] = await db.select({ n: count() }).from(s.homepageContent);
-  if (homeCount === 0) {
-    await db.insert(s.homepageContent).values({
+    }).onConflictDoNothing(),
+    db.insert(s.homepageContent).values({
       id: 1,
       heroTitleEn: "Slow-cooked flavour, delivered fast.",
       heroTitleAr: "نكهات مطهوة على مهل، تصلك بسرعة.",
@@ -65,76 +115,34 @@ export async function seedDatabase(db: DB) {
       aboutAr:
         "بدأت ساحة الزعفران بفكرة بسيطة: الأطباق التي كبرنا ونحن نتشاركها في ساحات البيوت تستحق العناية نفسها التي تحظى بها أرقى المطاعم. نتبّل اللحوم طوال الليل، ونشويها على الفحم الحقيقي، وننقع الزعفران بأيدينا كل صباح. سواء كنت تطلب للديوانية كلها أو غداءً لشخص واحد، يخرج كل طلب من مطبخنا كما نقدمه في بيوتنا.",
       aboutImageUrl: unsplash(aboutPhoto),
-    });
-  }
-
-  const [{ n: areaCount }] = await db.select({ n: count() }).from(s.deliveryAreas);
-  if (areaCount === 0) {
-    await db.insert(s.deliveryAreas).values(
-      seedAreas.map((a, i) => ({ ...a, deliveryFee: a.deliveryFee ?? null, sortOrder: i })),
-    );
-  }
-
-  const [{ n: catCount }] = await db.select({ n: count() }).from(s.categories);
-  if (catCount === 0) {
-    const cats = await db
+    }).onConflictDoNothing(),
+    db
+      .insert(s.deliveryAreas)
+      .values(seedAreas.map((a, i) => ({ ...a, id: i + 1, deliveryFee: a.deliveryFee ?? null, sortOrder: i })))
+      .onConflictDoNothing(),
+    db
       .insert(s.categories)
-      .values(seedCategories.map((c, i) => ({ ...c, sortOrder: i })))
-      .returning({ id: s.categories.id, slug: s.categories.slug });
-    const catId = new Map(cats.map((c) => [c.slug, c.id]));
-
-    const items = await db
-      .insert(s.menuItems)
-      .values(
-        seedItems.map((item, i) => ({
-          slug: item.slug,
-          categoryId: catId.get(item.category) ?? null,
-          nameEn: item.nameEn,
-          nameAr: item.nameAr,
-          descriptionEn: item.descriptionEn,
-          descriptionAr: item.descriptionAr,
-          price: item.price,
-          imageUrl: seedPhotos[item.slug] ? unsplash(seedPhotos[item.slug]) : null,
-          isAvailable: item.isAvailable ?? true,
-          tags: item.tags ?? "",
-          sortOrder: i,
-        })),
-      )
-      .returning({ id: s.menuItems.id, slug: s.menuItems.slug, categoryId: s.menuItems.categoryId });
-    const itemId = new Map(items.map((i) => [i.slug, i.id]));
-
-    await db
+      .values(seedCategories.map((c, i) => ({ ...c, id: i + 1, sortOrder: i })))
+      .onConflictDoNothing(),
+    db.insert(s.menuItems).values(itemRows).onConflictDoNothing(),
+    db
       .insert(s.popularItems)
-      .values(seedPopular.map((slug, i) => ({ menuItemId: itemId.get(slug)!, sortOrder: i })));
+      .values(seedPopular.filter((slug) => itemId.has(slug)).map((slug, i) => ({ menuItemId: itemId.get(slug)!, sortOrder: i })))
+      .onConflictDoNothing(),
+    db
+      .insert(s.adminUsers)
+      .values({
+        email: adminEmail,
+        name: "Restaurant Owner",
+        passwordHash: await hashPassword(adminPassword),
+        role: "owner",
+        mustChangePassword: !process.env.ADMIN_PASSWORD,
+      })
+      .onConflictDoNothing(),
+    marker,
+  ];
+  if (groupRows.length) statements.push(db.insert(s.optionGroups).values(groupRows).onConflictDoNothing());
+  if (optionRows.length) statements.push(db.insert(s.options).values(optionRows).onConflictDoNothing());
 
-    for (const group of seedOptionGroups) {
-      const cid = catId.get(group.categorySlug);
-      for (const item of items.filter((i) => i.categoryId === cid)) {
-        const [g] = await db
-          .insert(s.optionGroups)
-          .values({
-            menuItemId: item.id,
-            nameEn: group.nameEn,
-            nameAr: group.nameAr,
-            minSelect: group.minSelect,
-            maxSelect: group.maxSelect,
-          })
-          .returning({ id: s.optionGroups.id });
-        await db.insert(s.options).values(group.options.map((o, i) => ({ ...o, groupId: g.id, sortOrder: i })));
-      }
-    }
-  }
-
-  const [{ n: adminCount }] = await db.select({ n: count() }).from(s.adminUsers);
-  if (adminCount === 0) {
-    const email = (process.env.ADMIN_EMAIL || "admin@saffronyard.kw").toLowerCase().trim();
-    const password = process.env.ADMIN_PASSWORD || "ChangeMe-Saffron-2026";
-    await db.insert(s.adminUsers).values({
-      email,
-      name: "Restaurant Owner",
-      passwordHash: await hashPassword(password),
-      role: "owner",
-      mustChangePassword: !process.env.ADMIN_PASSWORD,
-    });
-  }
+  await db.batch(statements);
 }
